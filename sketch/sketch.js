@@ -48,6 +48,7 @@ function setCard() {
 
 function pingURL() {
     setInterval(firstCardPrint, 20000);
+//    https://www.w3schools.com/js/js_timing.asp
 }
 
 function gotData(data) {
