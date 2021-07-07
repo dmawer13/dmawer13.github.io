@@ -2,6 +2,9 @@ let cards;
 const key = 'd67987e1-34d3-42a3-8461-f9519de91413';
 //const url = 'https://api.pokemontcg.io/v2/cards?q=id:base1';
 
+let cardArray = [];
+let randomArray = [];
+
 let sel;
 let button;
 let cardSet = 'base1';
@@ -47,8 +50,9 @@ function setCard() {
 }
 
 function pingURL() {
-    setInterval(firstCardPrint, 20000);
-//    https://www.w3schools.com/js/js_timing.asp
+    makeSetArray();
+    setInterval(randomizedSelectCard, 2000);
+    //    https://www.w3schools.com/js/js_timing.asp
 }
 
 function gotData(data) {
@@ -66,8 +70,8 @@ function setSet() {
 function firstCardPrint() {
     if (cards) {
         //YOU NEED TO WAIT FOR CARDS TO LOAD BEFORE GOING INTO THE JSON
-        let generateRando = Math.floor(random(0,cards.data.length));
-        
+        let generateRando = Math.floor(random(0, cards.data.length));
+
         let response = cards.data[generateRando].images.large;
         //        text(response, width/2, height/2 + 20);
         console.log("This set has " + cards.data.length + " cards");
@@ -84,13 +88,52 @@ function firstCardPrint() {
 
 function timedCardPrint() {
     //borrowed from firstCardPrint function, but omitted console logs.
+    console.log(cardArray);
+    let rando = Math.floor(random(0, cards.data.length));
+    console.log(rando);
+
     if (cards) {
-        let generateRando = Math.floor(random(0,cards.data.length));
-        let response = cards.data[generateRando].images.large;
-        loadImage(response, img => {
-            image(img, 0, 0);
-        });
+        let response = cards.data[rando].images.large;
+
+        //        for (let i = 0; i < cardArray.length - 1; i++) {
+        //            if (rando != cardArray[i]) {
+        if (!cardArray.includes(rando)) {
+            cardArray.push(rando);
+            loadImage(response, img => {
+                image(img, 0, 0);
+            });
+        } else {
+            console.log("duplicate found: " + rando);
+        }
+        //        }
+
+        //instead of this way, let's upfront find the number of cards in the set, make an arraylist with those numbers randomized, then iterate through that list.  
     }
 }
+
+
+function makeSetArray() {
+      if (cards) {
+//        let rando = Math.floor(random(1, cards.data.length));
+        console.log("this set has " + cards.data.length + " cards.")
+       for(let i = 0; i<cards.data.length; i++) {
+           randomArray.push(i);
+       }
+        console.log(randomArray);
+}}
+
+function randomizedSelectCard() {
+    //ugh, think of a new name.
+    let selectCard = 1;
+    
+    let response = cards.data[selectCard].images.large;
+    loadImage(response, img => {
+        image(img, 0,0);
+    })
+
+ 
+}
+
+
 
 function draw() {}
