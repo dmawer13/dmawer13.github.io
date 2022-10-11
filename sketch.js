@@ -1,4 +1,12 @@
-let cards;
+// 5/6/22 TODO: What do I ultimately want this thing to do, in pseudocode terms?  
+// Be a digital photo frame, with randomized cards changing every 1 minute or so.
+// I would like to be able to choose, from a dropdown, the set.  
+// Today, let's:
+// Make a card appear, using code below
+// Randomly change the card every 5 seconds
+
+
+let cardsPayload;
 const key = 'd67987e1-34d3-42a3-8461-f9519de91413';
 //const url = 'https://api.pokemontcg.io/v2/cards?q=id:base1';
 
@@ -6,8 +14,9 @@ let cardArray = [];
 let randomArray = [];
 
 let sel;
-let button;
-let cardSet = 'base1';
+let runButton;
+let nextButton;
+let cardSet = 'base1'; // <-- this is just setting the default as base 1
 
 //let url = 'https://api.pokemontcg.io/v2/cards?q=set.name:' + cardSet;
 
@@ -18,7 +27,7 @@ function setup() {
     background(200);
     sel = createSelect();
     sel.position(5, 5);
-    // 6/7 update: the options below are all by the ID's according the API.   
+
     sel.option('Base', 'base1'); //Base
     sel.option('Jungle', 'base2'); //Jungle
     sel.option('Wizards Black Star Promos', 'basep'); //Wizards Black Star Promos
@@ -32,32 +41,156 @@ function setup() {
     sel.option('Southern Islands', 'si1'); //Southern Islands
     sel.option('Neo Revelation', 'neo3'); //Neo Revelation
     sel.option('Neo Destiny', 'neo4'); //Neo Destiny
+    sel.option('Expedition Base Set', 'ecard1'); //
+    sel.option('Aquapolis', 'ecard2'); //
+    sel.option('Skyridge', 'ecard3'); //
+    // Why isn't this working below?
+    sel.selected('Southern Islands', 'si1');
+    
+//    selRarity = createSelect();
+//    selRarity.position(5, 30);
+//    selRarity.option('Common', '%20rarity:common');
+//    selRarity.option('Uncommon', '%20rarity:uncommon');
+//    selRarity.option('Rare', '%20!rarity:rare');
+//    selRarity.option('Holo Rare', '%20rarity:%22holo%20rare%22');
+    
+    holoCheck = createCheckbox('holo', false);
+    holoCheck.position(5,30);
+    holoCheck.changed(holoChk);
 
-    //  sel.selected('Jungle');
+    
+    
     sel.changed(setCard);
 
-    button = createButton('Run');
-    button.position(200, 5);
-    button.mousePressed(pingURL);
-    setCard();
+    runButton = createButton('mkArr()');
+    runButton.position(200, 5);
+    //    runButton.mousePressed(randomizedSelectCard);
+    runButton.mousePressed(makeArray);
+    //uncomment below to change to the 5 second timer.
+    //    runButton.mousePressed(pingURL);
+
+    nextButton = createButton('randSelCar()');
+    nextButton.position(270, 5);
+    nextButton.mousePressed(randomizedSelectCard);
+
+    listButton = createButton('dispShuf()');
+    listButton.position(380, 5);
+    listButton.mousePressed(displayShuffle);
+
+
+//    setCard(); // <--so this is setting the card one time. 
+
+    waitForURL();
+} // end of setup loop
+
+
+let holoAppend = '';
+    
+    function holoChk() {
+       if (holoCheck.checked()) {
+           console.log("holo checked");
+           holoAppend = '%20!rarity:%22rare%20holo%22';
+//           console.log(holoAppend);
+       } else {
+           console.log("holo unchecked");
+           holoAppend = '';
+//           console.log(holoAppend);
+       }
+    }
+
+
+function gotData(data) {
+    cardsPayload = data;
+    console.log("gotData() ran! Set: " + cardSet);
+}
+
+function URLmaker() {
+    // this should promise into setCard() {
+    let url = 'https://api.pokemontcg.io/v2/cards?q=set.id:' + cardSet + holoAppend;
+    return url;
+    console.log(url);
+}
+
+async function waitForURL() {
+    let url = await URLmaker();
+    console.log(url);
+    loadJSON(url, gotData);
 }
 
 function setCard() {
+    // this should await a URL former....
     cardSet = sel.value();
+//    holoAppend = '%20rarity:%22rare%20holo%22'; // okay, this needs to be scoped inside here, or make a workaround.
     console.log("Just changed the dropdown to: " + cardSet);
     loadJSON('https://api.pokemontcg.io/v2/cards?q=set.id:' + cardSet, gotData);
-    //    it's the set.name in the query above that's important.  I think I should change to set.id because all id's are single words, no spaces. But then that would make the dropdown ugly because they're a little nonsensical.  Maybe I should have an intermediate step where the dropdown names are readable but then the query goes by the ID "behind the scenes".
+// below should be awaiting from URLmaker():
+//    loadJSON(URLmaker, gotData); 
 }
 
+// Would like to be able to draw from multiple sets, like a checkbox system that would prepare a bunch of sets together, then cycle through those sets aka a digital photo frame. So,
+// Let's make a function that:
+// 1) GETs a whole set
+// 2) places the set's images into an array
+// 3) shows a random card from the array
+// 4) randomly cycles through the array, but doesn't select duplicates
+// 5) when there are no more cards left to show in the array, resets the shuffle.
+
 function pingURL() {
-    makeSetArray();
-    setInterval(randomizedSelectCard, 2000);
+    //    makeSetArray();
+    console.log('pingURL() just ran')
+    randomizedSelectCard();
+    setInterval(randomizedSelectCard, 5000);
+    //    console.log('5 seconds')
     //    https://www.w3schools.com/js/js_timing.asp
 }
 
-function gotData(data) {
-    cards = data;
-    console.log("gotData ran! Set: " + cardSet);
+
+function makeArray() {
+    console.log('makeArray() ran');
+    let response = cardsPayload.data; // it's a JSON object
+    //    console.log(response); // What's the datatype of response?
+    //    let array = [];
+    for (let i = 0; i < response.length; i++) {
+        array.push(response[i].images.large);
+    }
+}
+
+let array = []; // must be scoped here, outside the function that uses it.
+
+function displayShuffle() {
+//    console.log('https://api.pokemontcg.io/v2/cards?q=set.id:' + cardSet + holoAppend);
+    
+    let list2 = array; //scoped outside
+    let youChoose = random(array);
+    let entry = array.indexOf(youChoose);
+    console.log("chose card " + entry + " out of " + array.length);
+
+    // get an if list.length > 0 , then splice. else, 
+    array.splice(entry, 1);
+    console.log(array.length);
+
+    loadImage(youChoose, img => {
+        image(img, 0, 0);
+    })
+}
+
+function randomizedSelectCard() {
+    let response = random(cardsPayload.data).images.large; // <-- this is doing a lot; p5.js random() can take an array and will choose a random entry from the array.  Then, from the random array entry, it's grabbing images.large, as an image. 
+    loadImage(response, img => {
+        image(img, 0, 0);
+    })
+}
+
+function makeSetArray() { // this is largely useless, or at least no longer required to go through. but maybe I want it for later if I rotate through multiple sets.
+    if (cardsPayload) {
+        //        let rando = Math.floor(random(1, cards.data.length));
+        console.log("makeSetArray(): this set has " + cardsPayload.data.length + " cards.")
+        for (let i = 0; i < cardsPayload.data.length; i++) {
+            randomArray.push(i);
+        }
+        console.log('makeSetArray() ran')
+        console.log(randomArray);
+    }
 }
 
 function setSet() {
@@ -68,11 +201,11 @@ function setSet() {
 }
 
 function firstCardPrint() {
-    if (cards) {
+    if (cardsPayload) {
         //YOU NEED TO WAIT FOR CARDS TO LOAD BEFORE GOING INTO THE JSON
         let generateRando = Math.floor(random(0, cards.data.length));
 
-        let response = cards.data[generateRando].images.large;
+        let response = cardsPayload.data[generateRando].images.large;
         //        text(response, width/2, height/2 + 20);
         console.log("This set has " + cards.data.length + " cards");
         console.log("And I'm printing card number " + generateRando);
@@ -112,28 +245,12 @@ function timedCardPrint() {
 }
 
 
-function makeSetArray() {
-      if (cards) {
-//        let rando = Math.floor(random(1, cards.data.length));
-        console.log("this set has " + cards.data.length + " cards.")
-       for(let i = 0; i<cards.data.length; i++) {
-           randomArray.push(i);
-       }
-        console.log(randomArray);
-}}
 
-function randomizedSelectCard() {
-    //ugh, think of a new name.
-    let selectCard = 1;
-    
-    let response = cards.data[selectCard].images.large;
-    loadImage(response, img => {
-        image(img, 0,0);
-    })
 
- 
+
+
+
+function draw() {
+
+
 }
-
-
-
-function draw() {}
