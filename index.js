@@ -1,6 +1,8 @@
 // This function makes an API request to the OpenAI GPT-3 endpoint
+require('dotenv').config();
+
 async function generateText(prompt) {
-  const apiKey = "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";
+  const apiKey = token.env.AUTH_TOKEN;
   const response = await fetch(
     `https://api.openai.com/v1/engines/davinci/completions`,
     {
