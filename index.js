@@ -2,7 +2,7 @@
 require('dotenv').config();
 
 async function generateText(prompt) {
-  const apiKey = token.env.AUTH_TOKEN;
+  const apiKey = .env.AUTH_TOKEN;
   const response = await fetch(
     `https://api.openai.com/v1/engines/davinci/completions`,
     {
